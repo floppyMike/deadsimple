@@ -147,15 +147,17 @@ pub fn ArgStruct(
     comptime optValueArgs: []const Arg,
     /// Must have arguments that are positional (ex. <path>) and must contain a `[]const u8`.
     comptime posArgs: []const Arg,
+    /// Accepts list of values after '-'.
+    comptime vaArgs: ?Arg,
 ) type {
     return struct {
+        const allArgs = optFlagArgs ++ optValueArgs ++ posArgs ++ (if (vaArgs) |va| .{va} else .{});
+
         const Args = MergeStruct(&.{
             BuildArgStruct(bool, optFlagArgs),
             BuildArgStruct(?[:0]const u8, optValueArgs),
             BuildArgStruct([:0]const u8, posArgs),
         });
-
-        const allArgs = optFlagArgs ++ optValueArgs ++ posArgs;
 
         /// Filled out user struct with slices of the arguments
         args: Args,
@@ -171,54 +173,62 @@ pub fn ArgStruct(
             /// Writer implementing .writeAll([]const u8) !void
             wrt: anytype,
         ) !void {
-            const haveOptions = if (allArgs.len == 0) "" else " [options]";
+            const msg = comptime blk: {
+                var msg: []const u8 = "";
 
-            const positionals = comptime blk: {
-                var pos: []const u8 = "";
-                for (posArgs) |arg| pos = pos ++ " <" ++ arg.name ++ ">";
-                break :blk pos;
-            };
+                // Append description
+                msg = msg ++ description;
 
-            const nameMaxLen, const descMaxLen = comptime blk: {
-                var nameMaxLen = 0;
-                var descMaxLen = 0;
-                for (optFlagArgs) |i| nameMaxLen, descMaxLen = .{ @max(nameMaxLen, i.name.len), @max(descMaxLen, i.desc.len) };
-                for (optValueArgs) |i| nameMaxLen, descMaxLen = .{ @max(nameMaxLen, i.name.len), @max(descMaxLen, i.desc.len) };
-                for (posArgs) |i| nameMaxLen, descMaxLen = .{ @max(nameMaxLen, i.name.len), @max(descMaxLen, i.desc.len) };
+                // Append usage
+                msg = msg ++ "\n\nusage: " ++ appName;
 
-                break :blk .{ nameMaxLen, descMaxLen };
-            };
+                // Append options flag if available
+                if (allArgs.len != 0) msg = msg ++ " [options]";
 
-            const options = comptime blk: {
-                if (allArgs.len == 0) {
-                    break :blk "\n";
+                // Append positionals
+                for (posArgs) |arg| msg = msg ++ " <" ++ arg.name ++ ">";
+
+                // Append va_args if availble
+                if (vaArgs) |va| msg = msg ++ " - [" ++ va.name ++ "]";
+
+                // Append options if available
+                if (allArgs.len != 0) {
+                    const nameMaxLen = bblk: {
+                        var nameMaxLen = 0;
+                        for (allArgs) |i| nameMaxLen = @max(nameMaxLen, i.name.len);
+                        break :bblk nameMaxLen;
+                    };
+
+                    msg = msg ++ "\n  options:\n";
+
+                    for (optFlagArgs) |i| msg = msg ++ std.fmt.comptimePrint("    [flg] {[name]s: <[nw]}: {[desc]s}\n", .{
+                        .name = i.name,
+                        .desc = i.desc,
+                        .nw = nameMaxLen,
+                    });
+                    for (optValueArgs) |i| msg = msg ++ std.fmt.comptimePrint("    [val] {[name]s: <[nw]}: {[desc]s}\n", .{
+                        .name = i.name,
+                        .desc = i.desc,
+                        .nw = nameMaxLen,
+                    });
+                    for (posArgs) |i| msg = msg ++ std.fmt.comptimePrint("    [pos] {[name]s: <[nw]}: {[desc]s}\n", .{
+                        .name = i.name,
+                        .desc = i.desc,
+                        .nw = nameMaxLen,
+                    });
+                    if (vaArgs) |i| msg = msg ++ std.fmt.comptimePrint("    [var] {[name]s: <[nw]}: {[desc]s}\n", .{
+                        .name = i.name,
+                        .desc = i.desc,
+                        .nw = nameMaxLen,
+                    });
+                } else {
+                    msg = msg ++ "\n";
                 }
 
-                var opts: []const u8 = "\n  options:\n";
-
-                for (optFlagArgs) |i| opts = opts ++ std.fmt.comptimePrint("    [flg] {[name]s: <[nw]}: {[desc]s: <[dw]}\n", .{
-                    .name = i.name,
-                    .desc = i.desc,
-                    .nw = nameMaxLen,
-                    .dw = descMaxLen,
-                });
-                for (optValueArgs) |i| opts = opts ++ std.fmt.comptimePrint("    [val] {[name]s: <[nw]}: {[desc]s: <[dw]}\n", .{
-                    .name = i.name,
-                    .desc = i.desc,
-                    .nw = nameMaxLen,
-                    .dw = descMaxLen,
-                });
-                for (posArgs) |i| opts = opts ++ std.fmt.comptimePrint("    [pos] {[name]s: <[nw]}: {[desc]s: <[dw]}\n", .{
-                    .name = i.name,
-                    .desc = i.desc,
-                    .nw = nameMaxLen,
-                    .dw = descMaxLen,
-                });
-
-                break :blk opts;
+                break :blk msg;
             };
 
-            try wrt.writeAll(description ++ "\n\nusage: " ++ appName ++ haveOptions ++ positionals ++ options);
+            try wrt.writeAll(msg);
         }
 
         /// Parse the cli given arguments with the user given structure
@@ -309,7 +319,7 @@ pub fn ArgStruct(
     };
 }
 
-test "ArgStruct Usage" {
+test "ArgStruct.parseArgs Usage" {
     const Args = ArgStruct("test", "This is a test", &.{.{
         .name = "help",
         .desc = "Displays this help message.",
@@ -319,7 +329,7 @@ test "ArgStruct Usage" {
     }}, &.{.{
         .name = "°*'\"Ä*\"§",
         .desc = "Magic characters",
-    }});
+    }}, null);
 
     { // Correct without rest
         const parsedArgs = try Args.parseArgs(&.{ "-help", "--A space!!!", "val", "test" });
