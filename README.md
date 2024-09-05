@@ -2,7 +2,7 @@
 A simple one file zig library providing a easy to use command line interface.
 
 ## Why dead?
-Simply I don't have infinite time to maintain what I write. So I strive for my code to be complete. Meaning I want it to be dead. But this involves it being extremely simple so don't expect many features but at least it won't be a giant codebase with a dozen of dependancies that can break or are insecure. 
+Simply I don't have infinite time to maintain what I write. So I strive for my code to be complete. Meaning I want it to be dead. But this involves it being extremely simple so don't expect many features. But at least it won't be a giant codebase with a dozen dependancies that can break or are insecure. 
 
 ## How to use it
 1. In your `build.zig` add the following: (`exe` is your executable but can also be a library)
