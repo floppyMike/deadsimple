@@ -1,8 +1,28 @@
 # deadcli
-A simple one file zig library providing a easy to use command line interface.
+A simple one file zig library providing a easy to use command line interface without needing allocations.
 
 ## Why dead?
-Simply I don't have infinite time to maintain what I write. So I strive for my code to be complete. Meaning I want it to be dead. But this involves it being extremely simple so don't expect many features. But at least it won't be a giant codebase with a dozen dependancies that can break or are insecure. 
+Simply I don't have infinite time to maintain what I write. So I strive for my code to be complete. Meaning I want it to be dead. But this involves it being extremely simple so don't expect many features. But at least it won't be a giant codebase with a dozen dependancies that can break or are insecure.
+
+## CLI Syntax
+This doesn't follow your typical syntax for switches and arguments as discribed [here](https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap12.html) but rather uses a much more simplified version as discribed in the following:
+### Flags
+Flags represent true or false. They default to false and are set true using `-flag` where `flag` is a name of a predefined flag.
+### Optional Values
+Optional Values are represented as strings. Internally they are of type `?[:0]const u8`. Empty values are not possible. They are set using `--option value` where `option` is a name of a predefined optional value and `value` will be the associated value.
+### Positional Values
+Positional Values are also represented as strings but internally as `[:0]const u8` meaning they have to be included otherwise the parsing fails. They are set using `value`. So simply writing the value. Its position in the arguments list isn't predefinied.
+### Variadic Values
+Variadic Values are a list of strings internally as `[]const [*:0]const u8`. They are set at the end after a single `-`. They are always accepted.
+### Example
+```
+exampleapp -help test.csv --verbose 3 - 1 2 3 
+```
+Here we have the following:
+1. `help` is set to true
+2. `text.csv` is a positional value
+3. `verbose` is set to `"3"`
+4. Variadic Values contain `"1", "2", "3"`
 
 ## How to use it
 1. In your `build.zig` add the following: (`exe` is your executable but can also be a library)
