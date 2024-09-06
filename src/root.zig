@@ -183,7 +183,7 @@ pub fn ArgStruct(
                 msg = msg ++ "\n\nusage: " ++ appName;
 
                 // Append options flag if available
-                if (allArgs.len != 0) msg = msg ++ " [options]";
+                if (optFlagArgs.len != 0 or optValueArgs.len != 0) msg = msg ++ " [options]";
 
                 // Append positionals
                 for (posArgs) |arg| msg = msg ++ " <" ++ arg.name ++ ">";
