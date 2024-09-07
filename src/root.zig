@@ -246,7 +246,7 @@ pub fn ArgStruct(
 
             // Find all positional addresses in struct in order for quick access
             const posAdressOffsets = comptime brk: {
-                var addrs: [posArgs.len]usize = .{0} ** posArgs.len;
+                var addrs: [posArgs.len:0]usize = .{0} ** posArgs.len;
                 for (posArgs, 0..) |arg, i| addrs[i] = @offsetOf(Args, arg.name);
                 break :brk addrs;
             };
