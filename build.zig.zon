@@ -1,6 +1,8 @@
 .{
-    .name = "deadcli",
+    .name = .deadcli,
     .version = "1.0.0",
+    .fingerprint = 0x1d0d9fe6c8fdcd7d,
+    .minimum_zig_version = "0.14.0",
 
     .paths = .{
         "build.zig",

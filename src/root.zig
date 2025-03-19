@@ -16,11 +16,11 @@ pub fn MergeStruct(
         return a[0];
     }
 
-    const prevMerge = @typeInfo(MergeStruct(a[1..])).Struct;
-    const currMerge = @typeInfo(a[0]).Struct;
+    const prevMerge = @typeInfo(MergeStruct(a[1..])).@"struct";
+    const currMerge = @typeInfo(a[0]).@"struct";
 
     return @Type(.{
-        .Struct = .{
+        .@"struct" = .{
             .layout = .auto,
             .fields = currMerge.fields ++ prevMerge.fields,
             .decls = &[_]std.builtin.Type.Declaration{},
@@ -48,9 +48,9 @@ test "Merge 3 structs with MergeStruct" {
         b: u32,
         c: []const u8,
         d: bool,
-    }).Struct;
+    }).@"struct";
 
-    const actual = @typeInfo(merge).Struct;
+    const actual = @typeInfo(merge).@"struct";
 
     try comptime std.testing.expectEqualDeep(expected, actual);
 }
@@ -84,12 +84,12 @@ fn BuildArgStruct(
         field.name = arg.name;
         field.alignment = 0;
         field.is_comptime = false;
-        field.default_value = null;
+        field.default_value_ptr = null;
         field.type = T;
     }
 
     return @Type(.{
-        .Struct = .{
+        .@"struct" = .{
             .layout = .auto,
             .fields = &fields,
             .decls = &[_]std.builtin.Type.Declaration{},
@@ -109,9 +109,9 @@ test "BuildArgStruct does what is should do" {
         @"1": u64,
         y: u64,
         z: u64,
-    }).Struct;
+    }).@"struct";
 
-    const actual = @typeInfo(Args).Struct;
+    const actual = @typeInfo(Args).@"struct";
 
     try comptime std.testing.expectEqualDeep(expected, actual);
 }
