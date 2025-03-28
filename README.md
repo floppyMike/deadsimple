@@ -1,7 +1,7 @@
-# cli
+# deadsimple
 A simple one file zig library providing a easy to use command line interface without needing allocations.
 
-## CLI Syntax
+## CLI
 This doesn't follow your typical syntax for switches and arguments as discribed [here](https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap12.html) but rather uses a much more simplified version as discribed in the following:
 ### Flags
 Flags represent true or false. They default to false and are set true using `-flag` where `flag` is a name of a predefined flag.
@@ -24,26 +24,22 @@ Here we have the following:
 ## How to use it
 1. In your `build.zig` add the following: (`exe` is your executable but can also be a library)
     ```zig
-    const cliPackage = b.dependency("cli", .{
+    const deadsimplePackage = b.dependency("deadsimple", .{
         .target = target,
         .optimize = optimize,
     });
     
-    exe.root_module.addImport("cli", cliPackage.module("cli"));
+    exe.root_module.addImport("deadsimple", deadsimplePackage.module("deadsimple"));
     ```
 2. Import the library either by used git submodule into `extern` and then adding 
     ```zig
-    .cli = .{
-       .path = "extern/cli",
+    .deadsimple = .{
+       .path = "extern/deadsimple",
     },
     ```
     to the `.dependencies` in `build.zig.zon` or be using zigs [inbuilt system](https://zig.news/edyu/zig-package-manager-wtf-is-zon-558e).
-3. Example usage of the library on linux is as follows (with `const cli = @import("cli");`):
+3. Example usage of the library on linux is as follows (with `const cli = @import("deadsimple").cli;`):
     ```zig
-    const cli = @import("cli");
-
-    ...
-
     const stdoutFile = std.io.getStdOut().writer();
 
     const Args = cli.ArgStruct(
