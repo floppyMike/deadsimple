@@ -137,8 +137,6 @@ pub const ParseError = error{
 /// - If a argument has an empty name
 /// - If a argument has a invalid name (struct field can't be named that way)
 pub fn ArgStruct(
-    /// Command for application
-    comptime appName: []const u8,
     /// Description of the application
     comptime description: []const u8,
     /// Optional flag arguments that only have one character (ex. "-b") and use type `bool`
@@ -170,8 +168,10 @@ pub fn ArgStruct(
         /// Errors:
         /// - Returns errors from writer .writeAll
         pub fn displayHelp(
-            /// Writer implementing .writeAll([]const u8) !void
+            /// Writer implementing .print(comptime []const u8, {params...}) !void
             wrt: anytype,
+            /// Command for application
+            appName: [*:0]const u8,
         ) !void {
             const msg = comptime blk: {
                 var msg: []const u8 = "";
@@ -179,8 +179,8 @@ pub fn ArgStruct(
                 // Append description
                 msg = msg ++ description;
 
-                // Append usage
-                msg = msg ++ "\n\nusage: " ++ appName;
+                // Append usage with name as a format since non comptime
+                msg = msg ++ "\n\nusage: " ++ "{s}";
 
                 // Append options flag if available
                 if (optFlagArgs.len != 0 or optValueArgs.len != 0) msg = msg ++ " [options]";
@@ -228,7 +228,7 @@ pub fn ArgStruct(
                 break :blk msg;
             };
 
-            try wrt.writeAll(msg);
+            try wrt.print(msg, .{appName});
         }
 
         /// Parse the cli given arguments with the user given structure
@@ -320,7 +320,7 @@ pub fn ArgStruct(
 }
 
 test "ArgStruct.parseArgs Usage" {
-    const Args = ArgStruct("test", "This is a test", &.{.{
+    const Args = ArgStruct("This is a test", &.{.{
         .name = "help",
         .desc = "Displays this help message.",
     }}, &.{.{
