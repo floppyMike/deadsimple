@@ -43,7 +43,6 @@ Here we have the following:
     const stdoutFile = std.io.getStdOut().writer();
 
     const Args = cli.ArgStruct(
-        "exampleapp",
         "This is an example app.",
         &.{.{
             .name = "help",
@@ -55,7 +54,7 @@ Here we have the following:
     );
 
     const parsedArgs = Args.parseArgs(std.os.argv[1..]) catch {
-        Args.displayHelp(stdout_file) catch @panic("stdout is inaccessible");
+        Args.displayHelp(stdout_file, std.os.argv[0]) catch @panic("stdout is inaccessible");
         return;
     };
 
@@ -63,7 +62,7 @@ Here we have the following:
     const rest = parsedArgs.remaining; // For remaining arguments after '-'
 
     if (args.help) {
-        Args.displayHelp(stdout_file) catch @panic("stdout is inaccessible");
+        Args.displayHelp(stdout_file, std.os.argv[0]) catch @panic("stdout is inaccessible");
         return;
     }
     ```
