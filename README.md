@@ -1,8 +1,5 @@
-# deadcli
+# cli
 A simple one file zig library providing a easy to use command line interface without needing allocations.
-
-## Why dead?
-Simply I don't have infinite time to maintain what I write. So I strive for my code to be complete. Meaning I want it to be dead. But this involves it being extremely simple so don't expect many features. But at least it won't be a giant codebase with a dozen dependancies that can break or are insecure.
 
 ## CLI Syntax
 This doesn't follow your typical syntax for switches and arguments as discribed [here](https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap12.html) but rather uses a much more simplified version as discribed in the following:
@@ -27,25 +24,29 @@ Here we have the following:
 ## How to use it
 1. In your `build.zig` add the following: (`exe` is your executable but can also be a library)
     ```zig
-    const deadcliPackage = b.dependency("deadcli", .{
+    const cliPackage = b.dependency("cli", .{
         .target = target,
         .optimize = optimize,
     });
     
-    exe.root_module.addImport("deadcli", deadcliPackage.module("deadcli"));
+    exe.root_module.addImport("cli", cliPackage.module("cli"));
     ```
 2. Import the library either by used git submodule into `extern` and then adding 
     ```zig
-    .deadsimple = .{
-       .path = "extern/deadsimple",
+    .cli = .{
+       .path = "extern/cli",
     },
     ```
     to the `.dependencies` in `build.zig.zon` or be using zigs [inbuilt system](https://zig.news/edyu/zig-package-manager-wtf-is-zon-558e).
-3. Example usage of the library on linux is as follows (with `const di = @import("deadcli");`):
+3. Example usage of the library on linux is as follows (with `const cli = @import("cli");`):
     ```zig
+    const cli = @import("cli");
+
+    ...
+
     const stdoutFile = std.io.getStdOut().writer();
 
-    const Args = di.ArgStruct(
+    const Args = cli.ArgStruct(
         "exampleapp",
         "This is an example app.",
         &.{.{
