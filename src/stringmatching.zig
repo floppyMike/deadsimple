@@ -31,6 +31,97 @@ pub fn bruteForce(
     return null;
 }
 
+/// Computes the string matching problem using the Knuth Morris Pratt method
+/// using a self allocated prefix table.
+///
+/// Returns:
+/// Index of the match, or null if no match occured, else an alloc error.
+pub fn knuthMorrisPrattAlloc(
+    /// Allocator to allocate the prefix table array of size `needle.len`.
+    alloc: std.mem.Allocator,
+    /// String to search in.
+    haystack: []const u8,
+    /// String to seach with.
+    needle: []const u8,
+) !?usize {
+    const pt = try alloc.alloc(usize, needle.len);
+    defer alloc.free(pt);
+    return knuthMorrisPratt(haystack, .{
+        .len = needle.len,
+        .needle = needle.ptr,
+        .prefix_table = pt.ptr,
+    });
+}
+
+/// Computes the string matching problem using the Knuth Morris Pratt method
+/// using user provided prefix table memory.
+///
+/// Returns:
+/// Index of the match, or null if no match occured.
+pub fn knuthMorrisPratt(
+    /// String to search in.
+    haystack: []const u8,
+    needle_data: struct {
+        /// Length of the needle.
+        len: usize,
+        /// String to search with.
+        needle: [*]const u8,
+        /// Memory for the algorithm to use for the prefix table.
+        prefix_table: [*]usize,
+    },
+) ?usize {
+    const needle = needle_data.needle;
+    const pt = needle_data.prefix_table;
+    const needle_len = needle_data.len;
+
+    if (needle_len > haystack.len) return null;
+
+    const log = std.log.scoped(.KnuthMorrisPratt);
+    log.debug("haystack: {s}, needle: {s}", .{ haystack, needle[0..needle_len] });
+
+    const big: usize = @bitCast(@as(isize, -1));
+
+    // Calculate prefix table
+    {
+        log.debug("Setup prefix table", .{});
+
+        pt[0] = big;
+        var prefixi: usize = 0;
+
+        for (1..needle_len) |i| {
+            log.debug("i: {} -> {c}, prefixi: {} -> {c}", .{ i, needle[i], prefixi, needle[prefixi] });
+
+            pt[i] = prefixi;
+            while (prefixi != big and needle[i] != needle[prefixi]) {
+                prefixi = pt[prefixi];
+                log.debug("\tprefixi: {}", .{prefixi});
+            }
+
+            prefixi = @addWithOverflow(prefixi, 1)[0];
+        }
+    }
+
+    // Evalutate haystack
+    {
+        log.debug("Evalutate haystack", .{});
+
+        var needlei: usize = 0;
+        for (0..haystack.len) |i| {
+            log.debug("i: {} -> {c}, needlei: {} -> {c}", .{ i, haystack[i], needlei, needle[needlei] });
+
+            while (needlei != big and haystack[i] != needle[needlei]) {
+                needlei = pt[needlei];
+                log.debug("\tneedlei: {}", .{needlei});
+            }
+
+            needlei = @addWithOverflow(needlei, 1)[0];
+            if (needlei == needle_len) return i + 1 - needle_len;
+        }
+    }
+
+    return null;
+}
+
 test "Fuzz string matching" {
     std.testing.log_level = .info;
 
@@ -52,5 +143,6 @@ test "Fuzz string matching" {
         const expect = std.mem.indexOf(u8, &haystack, needle);
 
         try std.testing.expectEqual(expect, bruteForce(&haystack, needle));
+        try std.testing.expectEqual(expect, try knuthMorrisPrattAlloc(std.testing.allocator, &haystack, needle));
     }
 }
