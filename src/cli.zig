@@ -82,7 +82,7 @@ fn BuildArgStruct(
         if (arg.name.len == 0) @compileError("Argument name can't be empty.");
 
         field.name = arg.name;
-        field.alignment = 0;
+        field.alignment = @alignOf(T);
         field.is_comptime = false;
         field.default_value_ptr = null;
         field.type = T;
@@ -169,7 +169,7 @@ pub fn ArgStruct(
         /// - Returns errors from writer .writeAll
         pub fn displayHelp(
             /// Writer implementing .print(comptime []const u8, {params...}) !void
-            wrt: anytype,
+            wrt: *std.Io.Writer,
             /// Command for application
             appName: [*:0]const u8,
         ) !void {
